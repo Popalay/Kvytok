@@ -1,0 +1,42 @@
+{
+  "project_info": {
+    "project_number": "699008692992",
+    "firebase_url": "https://luc-android.firebaseio.com",
+    "project_id": "luc-android",
+    "storage_bucket": "luc-android.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:699008692992:android:bd4f9e960f4e26a6",
+        "android_client_info": {
+          "package_name": "com.popalay.luc"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "699008692992-8huvhh6rp0q3k2hlu26m2pvn721i7ca5.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDxoO5ttive2D6XYpBaFBWhOUsTEgULBxY"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
