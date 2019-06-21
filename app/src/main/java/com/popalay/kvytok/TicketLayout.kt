@@ -19,6 +19,7 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
+import kotlin.math.min
 
 open class TicketLayout @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
@@ -275,6 +276,6 @@ open class TicketLayout @JvmOverloads constructor(
 
     private fun setShadowBlurRadius(elevation: Float) {
         val maxElevation = 24f.px.toFloat()
-        mShadowBlurRadius = Math.min(25f * (elevation / maxElevation), 25f)
+        mShadowBlurRadius = min(25f * (elevation / maxElevation), 25f)
     }
 }

@@ -5,21 +5,29 @@ import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
-import android.graphics.Canvas
-import android.graphics.Color
 import android.graphics.Rect
 import android.graphics.pdf.PdfRenderer
 import android.os.Bundle
 import android.os.ParcelFileDescriptor
+import android.preference.PreferenceManager
+import android.util.Log
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.widget.ContentLoadingProgressBar
+import androidx.recyclerview.widget.PagerSnapHelper
+import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.button.MaterialButton
 import com.google.firebase.ml.vision.FirebaseVision
 import com.google.firebase.ml.vision.barcode.FirebaseVisionBarcode
 import com.google.firebase.ml.vision.barcode.FirebaseVisionBarcodeDetectorOptions
 import com.google.firebase.ml.vision.common.FirebaseVisionImage
+import io.reactivex.Completable
+import io.reactivex.Single
+import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.disposables.Disposables
+import io.reactivex.schedulers.Schedulers
 import java.io.File
 
 class MainActivity : AppCompatActivity() {
@@ -31,27 +39,36 @@ class MainActivity : AppCompatActivity() {
     }
 
     private val buttonChooseFile: MaterialButton by bindView(R.id.button_choose_file)
-    private val layoutTicket: TicketLayout by bindView(R.id.layout_ticket)
+    private val listTickets: RecyclerView by bindView(R.id.list_tickets)
+    private val progressBar: ContentLoadingProgressBar by bindView(R.id.progress_bar)
+
+    private val ticketAdapter = TicketsAdapter()
+    private var disposable = Disposables.disposed()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        layoutTicket.ticket = null
+        listTickets.adapter = ticketAdapter
+        PagerSnapHelper().attachToRecyclerView(listTickets)
         buttonChooseFile.setOnClickListener {
             requestReadFilePermission()
         }
+
+        processFile(getLastFile().blockingGet())
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == REQUEST_CODE_FILE && resultCode == Activity.RESULT_OK && data != null) {
             val fileUri = data.data
-            val file = File(fileUri?.getRealPath(this))
-            file.pdfFileToBitmaps().firstOrNull()?.removeTransparentBackground()?.let {
-                getQRCodeDetails(it)
-            }
+            processFile(fileUri?.getRealPath(this) ?: "")
         }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        disposable.dispose()
     }
 
     override fun onRequestPermissionsResult(
@@ -65,7 +82,35 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun File.pdfFileToBitmaps(): List<Bitmap> =
+    private fun processFile(filePath: String) {
+        if (filePath.isBlank()) return
+        val file = File(filePath)
+        Log.d("onNext", "start")
+        disposable = file.pdfFileToBitmaps()
+            .doOnSuccess { Log.d("onNext", "pdfFileToBitmaps") }
+            .flattenAsObservable { it }
+            .flatMapSingle { getQRCodeDetails(it) }
+            .doOnNext { Log.d("onNext", "getQRCodeDetails") }
+            .toList()
+            .doOnSuccess { Log.d("onNext", "toList") }
+            .subscribeOn(Schedulers.io())
+            .flatMap { saveLastFile(file.absolutePath).toSingleDefault(it) }
+            .observeOn(AndroidSchedulers.mainThread())
+            .doOnSubscribe { progressBar.show() }
+            .subscribe(
+                {
+                    progressBar.hide()
+                    ticketAdapter.submitList(it)
+                },
+                {
+                    progressBar.hide()
+                    Toast.makeText(baseContext, it.localizedMessage, Toast.LENGTH_SHORT)
+                        .show()
+                }
+            )
+    }
+
+    private fun File.pdfFileToBitmaps(): Single<List<Bitmap>> = Single.fromCallable {
         mutableListOf<Bitmap>().apply {
             try {
                 val renderer = PdfRenderer(
@@ -87,13 +132,13 @@ class MainActivity : AppCompatActivity() {
                     page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
                     add(bitmap)
                     page.close()
-
                 }
                 renderer.close()
             } catch (ex: Exception) {
                 ex.printStackTrace()
             }
-        }
+        }.toList()
+    }.subscribeOn(Schedulers.computation())
 
     private fun requestReadFilePermission() {
         if (ContextCompat.checkSelfPermission(
@@ -119,49 +164,33 @@ class MainActivity : AppCompatActivity() {
         startActivityForResult(Intent.createChooser(intent, "select file"), REQUEST_CODE_FILE)
     }
 
-    private fun getQRCodeDetails(bitmap: Bitmap) {
-        val options = FirebaseVisionBarcodeDetectorOptions.Builder()
-            .setBarcodeFormats(FirebaseVisionBarcode.FORMAT_QR_CODE)
-            .build()
-        val detector = FirebaseVision.getInstance().getVisionBarcodeDetector(options)
-        val image = FirebaseVisionImage.fromBitmap(bitmap)
-        detector.detectInImage(image)
-            .addOnSuccessListener {
-                for (firebaseBarcode in it) {
-                    val qrCode = bitmap.crop(firebaseBarcode.boundingBox)
-                    val ticket = parseTicket(firebaseBarcode.displayValue, qrCode)
-                    if (ticket == null) {
-                        Toast.makeText(
-                            baseContext,
-                            "Unsupported type of ticket, please try another",
-                            Toast.LENGTH_SHORT
-                        )
-                            .show()
-                    } else {
-                        layoutTicket.ticket = ticket
+    private fun getQRCodeDetails(bitmap: Bitmap): Single<Ticket> =
+        Single.create<Ticket> { emitter ->
+            val options = FirebaseVisionBarcodeDetectorOptions.Builder()
+                .setBarcodeFormats(FirebaseVisionBarcode.FORMAT_QR_CODE)
+                .build()
+            val detector = FirebaseVision.getInstance().getVisionBarcodeDetector(options)
+            val image = FirebaseVisionImage.fromBitmap(bitmap)
+            detector.detectInImage(image)
+                .addOnSuccessListener {
+                    for (firebaseBarcode in it) {
+                        val qrCode = bitmap.crop(firebaseBarcode.boundingBox)
+                        val ticket = parseTicket(firebaseBarcode.displayValue, qrCode)
+                        if (ticket == null) {
+                            emitter.onError(RuntimeException("Unsupported type of ticket, please try another"))
+                        } else {
+                            emitter.onSuccess(ticket)
+                        }
                     }
                 }
-            }
-            .addOnFailureListener {
-                it.printStackTrace()
-                Toast.makeText(baseContext, "Sorry, something went wrong!", Toast.LENGTH_SHORT)
-                    .show()
-            }
-    }
-
-    private fun Bitmap.removeTransparentBackground(): Bitmap {
-        val converted = Bitmap.createBitmap(
-            width,
-            height,
-            Bitmap.Config.ARGB_8888
-        )
-
-        Canvas(converted).apply {
-            drawColor(Color.WHITE)
-            drawBitmap(this@removeTransparentBackground, 0F, 0F, null)
-        }
-        return converted
-    }
+                .addOnFailureListener {
+                    it.printStackTrace()
+                    emitter.onError(RuntimeException("Sorry, something went wrong!"))
+                }
+                .addOnCompleteListener {
+                    bitmap.recycle()
+                }
+        }.subscribeOn(Schedulers.io())
 
     private fun Bitmap.crop(rect: Rect?): Bitmap = rect?.let {
         Bitmap.createBitmap(
@@ -172,4 +201,15 @@ class MainActivity : AppCompatActivity() {
             it.height()
         )
     } ?: this
+
+    private fun saveLastFile(path: String): Completable = Completable.fromCallable {
+        PreferenceManager.getDefaultSharedPreferences(this)
+            .edit()
+            .putString("FILE_PATH", path)
+            .apply()
+    }.subscribeOn(Schedulers.io())
+
+    private fun getLastFile(): Single<String> = Single.fromCallable {
+        PreferenceManager.getDefaultSharedPreferences(this).getString("FILE_PATH", "")
+    }
 }
