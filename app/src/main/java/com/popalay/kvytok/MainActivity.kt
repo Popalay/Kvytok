@@ -5,6 +5,8 @@ import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Color
 import android.graphics.Rect
 import android.graphics.pdf.PdfRenderer
 import android.os.Bundle
@@ -90,9 +92,11 @@ class MainActivity : AppCompatActivity() {
         disposable = file.pdfFileToBitmaps()
             .doOnSuccess { Log.d("onNext", "pdfFileToBitmaps") }
             .flattenAsObservable { it }
+            .map { it.removeTransparentBackground() }
+            .doOnNext { Log.d("onNext", "getQRCodeDetails start") }
             .flatMapSingle { getQRCodeDetails(it) }
             .doOnNext { Log.d("onNext", "getQRCodeDetails") }
-            .toList()
+            .toSortedList(compareBy({ it.trainNumber }, { it.carNumber }, { it.seatNumber }))
             .doOnSuccess { Log.d("onNext", "toList") }
             .subscribeOn(Schedulers.io())
             .flatMap { saveLastFile(file.absolutePath).toSingleDefault(it) }
@@ -110,6 +114,21 @@ class MainActivity : AppCompatActivity() {
                 }
             )
     }
+
+    private fun Bitmap.removeTransparentBackground(): Bitmap {
+        val converted = Bitmap.createBitmap(
+            width,
+            height,
+            Bitmap.Config.ARGB_8888
+        )
+
+        Canvas(converted).apply {
+            drawColor(Color.WHITE)
+            drawBitmap(this@removeTransparentBackground, 0F, 0F, null)
+        }
+        return converted
+    }
+
 
     private fun File.pdfFileToBitmaps(): Single<List<Bitmap>> = Single.fromCallable {
         mutableListOf<Bitmap>().apply {
