@@ -9,8 +9,10 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Rect
 import android.graphics.pdf.PdfRenderer
+import android.net.Uri
 import android.os.Bundle
 import android.os.ParcelFileDescriptor
+import android.os.Parcelable
 import android.preference.PreferenceManager
 import android.util.Log
 import android.view.View
@@ -58,7 +60,14 @@ class MainActivity : AppCompatActivity() {
             requestReadFilePermission()
         }
 
-        processFile(getLastFile().blockingGet())
+        when {
+            intent?.action == Intent.ACTION_SEND -> {
+                (intent.getParcelableExtra<Parcelable>(Intent.EXTRA_STREAM) as? Uri)?.let {
+                    processFile(it.getRealPath(this) ?: "")
+                }
+            }
+            else -> processFile(getLastFile().blockingGet())
+        }
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -126,6 +135,7 @@ class MainActivity : AppCompatActivity() {
             drawColor(Color.WHITE)
             drawBitmap(this@removeTransparentBackground, 0F, 0F, null)
         }
+        recycle()
         return converted
     }
 
