@@ -11,11 +11,12 @@ import android.os.Bundle
 import android.os.ParcelFileDescriptor
 import android.preference.PreferenceManager
 import android.util.Log
+import android.view.View
+import android.widget.ProgressBar
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.core.widget.ContentLoadingProgressBar
 import androidx.recyclerview.widget.PagerSnapHelper
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.button.MaterialButton
@@ -40,7 +41,7 @@ class MainActivity : AppCompatActivity() {
 
     private val buttonChooseFile: MaterialButton by bindView(R.id.button_choose_file)
     private val listTickets: RecyclerView by bindView(R.id.list_tickets)
-    private val progressBar: ContentLoadingProgressBar by bindView(R.id.progress_bar)
+    private val progressBar: ProgressBar by bindView(R.id.progress_bar)
 
     private val ticketAdapter = TicketsAdapter()
     private var disposable = Disposables.disposed()
@@ -96,14 +97,14 @@ class MainActivity : AppCompatActivity() {
             .subscribeOn(Schedulers.io())
             .flatMap { saveLastFile(file.absolutePath).toSingleDefault(it) }
             .observeOn(AndroidSchedulers.mainThread())
-            .doOnSubscribe { progressBar.show() }
+            .doOnSubscribe { progressBar.visibility = View.VISIBLE }
             .subscribe(
                 {
-                    progressBar.hide()
+                    progressBar.visibility = View.GONE
                     ticketAdapter.submitList(it)
                 },
                 {
-                    progressBar.hide()
+                    progressBar.visibility = View.GONE
                     Toast.makeText(baseContext, it.localizedMessage, Toast.LENGTH_SHORT)
                         .show()
                 }
