@@ -20,9 +20,12 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.view.isVisible
 import androidx.recyclerview.widget.PagerSnapHelper
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.button.MaterialButton
+import com.google.android.material.chip.Chip
+import com.google.android.material.chip.ChipGroup
 import com.google.firebase.ml.vision.FirebaseVision
 import com.google.firebase.ml.vision.barcode.FirebaseVisionBarcode
 import com.google.firebase.ml.vision.barcode.FirebaseVisionBarcodeDetectorOptions
@@ -45,6 +48,7 @@ class MainActivity : AppCompatActivity() {
     private val buttonChooseFile: MaterialButton by bindView(R.id.button_choose_file)
     private val listTickets: RecyclerView by bindView(R.id.list_tickets)
     private val progressBar: ProgressBar by bindView(R.id.progress_bar)
+    private val layoutChips: ChipGroup by bindView(R.id.layout_chips)
 
     private val ticketAdapter = TicketsAdapter()
     private var disposable = Disposables.disposed()
@@ -98,6 +102,7 @@ class MainActivity : AppCompatActivity() {
         val file = File(filePath)
         disposable = file.pdfFileToBitmaps()
             .flattenAsObservable { it }
+            .take(4)
             .map { it.removeTransparentBackground() }
             .flatMapSingle { getQRCodeDetails(it) }
             .toSortedList(compareBy({ it.trainNumber }, { it.carNumber }, { it.seatNumber }))
@@ -106,9 +111,13 @@ class MainActivity : AppCompatActivity() {
             .observeOn(AndroidSchedulers.mainThread())
             .doOnSubscribe { progressBar.visibility = View.VISIBLE }
             .subscribe(
-                {
+                { tickets ->
                     progressBar.visibility = View.GONE
-                    ticketAdapter.submitList(it)
+                    ticketAdapter.submitList(tickets)
+                    tickets.distinctBy { it.departure + it.arrival }
+                        .map { createChip(it, tickets.indexOf(it)) }
+                        .forEach { layoutChips.addView(it) }
+                    layoutChips.isVisible = layoutChips.childCount > 1
                 },
                 {
                     progressBar.visibility = View.GONE
@@ -116,6 +125,18 @@ class MainActivity : AppCompatActivity() {
                         .show()
                 }
             )
+    }
+
+    private fun createChip(ticket: Ticket, position: Int) = Chip(this).apply {
+        text =
+            "${ticket.departure.substringBeforeLast('-')}-${ticket.arrival.substringBeforeLast('-')}"
+        setChipBackgroundColorResource(R.color.green)
+        setTextColor(getColor(R.color.grey))
+        setTextAppearanceResource(R.style.TextAppearance_AppCompat_Caption)
+        setRippleColorResource(R.color.green_light)
+        setOnClickListener {
+            listTickets.smoothScrollToPosition(position)
+        }
     }
 
     private fun Bitmap.removeTransparentBackground(): Bitmap {
