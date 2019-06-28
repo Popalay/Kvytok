@@ -3,17 +3,17 @@ apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-android-extensions'
 
 android {
-    compileSdkVersion 28
+    compileSdkVersion 29
     defaultConfig {
         applicationId "com.popalay.kvytok"
         minSdkVersion 24
-        targetSdkVersion 28
-        versionCode 2
+        targetSdkVersion 29
+        versionCode 3
         versionName "1.0"
     }
     buildTypes {
         release {
-            minifyEnabled false
+            minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
@@ -31,7 +31,7 @@ dependencies {
     implementation "com.google.android.material:material:1.1.0-alpha07"
     implementation 'com.google.firebase:firebase-ml-vision:21.0.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.0.0-beta2'
-    implementation "io.reactivex.rxjava2:rxjava:2.2.9"
+    implementation "io.reactivex.rxjava2:rxjava:2.2.10"
     implementation 'io.reactivex.rxjava2:rxandroid:2.1.1'
 }
 

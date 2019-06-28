@@ -13,8 +13,8 @@
         android:layout_marginBottom="24dp"
         app:layout_constraintBottom_toTopOf="@id/view_dash_qr_code"
         app:layout_constraintDimensionRatio="1:1"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="@id/text_car_number"
+        app:layout_constraintStart_toStartOf="@id/label_train_number"
         app:layout_constraintTop_toTopOf="parent"
         tools:src="@tools:sample/avatars" />
 
@@ -22,7 +22,7 @@
         android:id="@+id/label_train_number"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
+        android:layout_marginTop="16dp"
         android:text="Train"
         android:textAppearance="?textAppearanceSubtitle1"
         android:textColor="?android:textColorSecondary"
@@ -46,7 +46,7 @@
         android:id="@+id/label_car_number"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
+        android:layout_marginTop="16dp"
         android:text="Car"
         android:textAppearance="?textAppearanceSubtitle1"
         android:textColor="?android:textColorSecondary"
@@ -71,7 +71,7 @@
         android:id="@+id/label_name"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
+        android:layout_marginTop="16dp"
         android:text="Passenger"
         android:textAppearance="?textAppearanceSubtitle1"
         android:textColor="?android:textColorSecondary"
@@ -85,6 +85,7 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="32dp"
         android:textAppearance="?textAppearanceSubtitle1"
+        android:textStyle="bold"
         app:layout_constraintEnd_toStartOf="@id/text_seat_number"
         app:layout_constraintHorizontal_chainStyle="spread"
         app:layout_constraintHorizontal_weight="0.6"
@@ -93,10 +94,50 @@
         tools:text="@tools:sample/full_names" />
 
     <TextView
+        android:id="@+id/label_departure"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="Departure"
+        android:textAppearance="?textAppearanceSubtitle1"
+        android:textColor="?android:textColorSecondary"
+        android:textSize="13sp"
+        app:layout_constraintStart_toStartOf="@id/text_name"
+        app:layout_constraintTop_toBottomOf="@id/text_name" />
+
+    <TextView
+        android:id="@+id/text_departure_city"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="32dp"
+        android:autoSizeTextType="uniform"
+        android:lines="1"
+        android:textAppearance="?textAppearanceSubtitle1"
+        app:layout_constraintEnd_toStartOf="@id/text_seat_number"
+        app:layout_constraintHorizontal_chainStyle="spread"
+        app:layout_constraintHorizontal_weight="0.6"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/label_departure"
+        tools:text="@tools:sample/cities" />
+
+    <TextView
+        android:id="@+id/text_departure_date"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="32dp"
+        android:textAppearance="?textAppearanceSubtitle1"
+        app:layout_constraintEnd_toStartOf="@id/text_seat_number"
+        app:layout_constraintHorizontal_chainStyle="spread"
+        app:layout_constraintHorizontal_weight="0.6"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/text_departure_city"
+        tools:text="@tools:sample/date/ddmmyy" />
+
+    <TextView
         android:id="@+id/label_seat_number"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
+        android:layout_marginTop="16dp"
         android:text="Seat"
         android:textAppearance="?textAppearanceSubtitle1"
         android:textColor="?android:textColorSecondary"
@@ -116,6 +157,47 @@
         app:layout_constraintStart_toEndOf="@id/text_name"
         app:layout_constraintTop_toBottomOf="@id/label_seat_number"
         tools:text="028 Full" />
+
+    <TextView
+        android:id="@+id/label_arrival"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="Arrival"
+        android:textAppearance="?textAppearanceSubtitle1"
+        android:textColor="?android:textColorSecondary"
+        android:textSize="13sp"
+        app:layout_constraintStart_toStartOf="@id/text_seat_number"
+        app:layout_constraintTop_toBottomOf="@id/text_seat_number" />
+
+    <TextView
+        android:id="@+id/text_arrival_city"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="32dp"
+        android:autoSizeTextType="uniform"
+        android:gravity="center_vertical"
+        android:lines="1"
+        android:textAppearance="?textAppearanceSubtitle1"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_weight="0.4"
+        app:layout_constraintStart_toEndOf="@id/text_name"
+        app:layout_constraintTop_toBottomOf="@id/label_arrival"
+        tools:text="@tools:sample/cities" />
+
+    <TextView
+        android:id="@+id/text_arrival_date"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="32dp"
+        android:textAppearance="?textAppearanceSubtitle1"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_weight="0.4"
+        app:layout_constraintStart_toEndOf="@id/text_name"
+        app:layout_constraintTop_toBottomOf="@id/text_arrival_city"
+        tools:text="@tools:sample/date/ddmmyy" />
 
     <TextView
         android:id="@+id/label_ticket_number"

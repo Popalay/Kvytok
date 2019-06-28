@@ -25,6 +25,10 @@ open class TicketLayout @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
 ) : FrameLayout(context, attrs, defStyleAttr) {
 
+    private val textDepartureCity: TextView by bindView(R.id.text_departure_city)
+    private val textDepartureDate: TextView by bindView(R.id.text_departure_date)
+    private val textArrivalCity: TextView by bindView(R.id.text_arrival_city)
+    private val textArrivalDate: TextView by bindView(R.id.text_arrival_date)
     private val textTicketNumber: TextView by bindView(R.id.text_ticket_number)
     private val imageQrCode: ImageView by bindView(R.id.image_qr_code)
     private val textTrainNumber: TextView by bindView(R.id.text_train_number)
@@ -70,10 +74,10 @@ open class TicketLayout @JvmOverloads constructor(
         set(value) {
             field = value?.also {
                 textTicketNumber.text = it.ticketNumber
-                /*             textDeparture.text = it.departure
-                             textDepartureDate.text = it.departureDate
-                             textArrival.text = it.arrival
-                             textArrivalDate.text = it.arrivalDate*/
+                textDepartureCity.text = it.departure
+                textDepartureDate.text = it.departureDate
+                textArrivalCity.text = it.arrival
+                textArrivalDate.text = it.arrivalDate
                 textTrainNumber.text = it.trainNumber
                 textCarNumber.text = it.carNumber
                 textSeatNumber.text = it.seatNumber
@@ -110,7 +114,8 @@ open class TicketLayout @JvmOverloads constructor(
         val left = paddingLeft + mShadowBlurRadius
         val right = width.toFloat() - paddingRight.toFloat() - mShadowBlurRadius
         val top = paddingTop + mShadowBlurRadius / 2
-        val bottom = height.toFloat() - paddingBottom.toFloat() - mShadowBlurRadius - mShadowBlurRadius / 2
+        val bottom =
+            height.toFloat() - paddingBottom.toFloat() - mShadowBlurRadius - mShadowBlurRadius / 2
         mPath.reset()
         mPath.arcTo(getTopLeftCornerRoundedArc(top, left), 180.0f, 90.0f, false)
         mPath.lineTo(left + mCornerRadius, top)
@@ -226,7 +231,10 @@ open class TicketLayout @JvmOverloads constructor(
     private fun initElements() {
         if (mDividerWidth > mScallopRadius) {
             mDividerWidth = mScallopRadius
-            Log.w("TicketLayout", "You cannot apply divider width greater than scallop radius. Applying divider width to scallop radius.")
+            Log.w(
+                "TicketLayout",
+                "You cannot apply divider width greater than scallop radius. Applying divider width to scallop radius."
+            )
         }
 
         mScallopPositions = mScallopPositionsPercent.map { 100 / it }.toFloatArray()
@@ -254,25 +262,34 @@ open class TicketLayout @JvmOverloads constructor(
             isAntiAlias = true
             color = mDividerColor
             strokeWidth = mDividerWidth.toFloat()
-            pathEffect = DashPathEffect(floatArrayOf(mDividerDashLength.toFloat(), mDividerDashGap.toFloat()), 0.0f)
+            pathEffect = DashPathEffect(
+                floatArrayOf(
+                    mDividerDashLength.toFloat(),
+                    mDividerDashGap.toFloat()
+                ), 0.0f
+            )
         }
     }
 
-    private fun getTopLeftCornerRoundedArc(top: Float, left: Float): RectF = mRoundedCornerArc.apply {
-        set(left, top, left + mCornerRadius * 2, top + mCornerRadius * 2)
-    }
+    private fun getTopLeftCornerRoundedArc(top: Float, left: Float): RectF =
+        mRoundedCornerArc.apply {
+            set(left, top, left + mCornerRadius * 2, top + mCornerRadius * 2)
+        }
 
-    private fun getTopRightCornerRoundedArc(top: Float, right: Float): RectF = mRoundedCornerArc.apply {
-        set(right - mCornerRadius * 2, top, right, top + mCornerRadius * 2)
-    }
+    private fun getTopRightCornerRoundedArc(top: Float, right: Float): RectF =
+        mRoundedCornerArc.apply {
+            set(right - mCornerRadius * 2, top, right, top + mCornerRadius * 2)
+        }
 
-    private fun getBottomLeftCornerRoundedArc(left: Float, bottom: Float): RectF = mRoundedCornerArc.apply {
-        set(left, bottom - mCornerRadius * 2, left + mCornerRadius * 2, bottom)
-    }
+    private fun getBottomLeftCornerRoundedArc(left: Float, bottom: Float): RectF =
+        mRoundedCornerArc.apply {
+            set(left, bottom - mCornerRadius * 2, left + mCornerRadius * 2, bottom)
+        }
 
-    private fun getBottomRightCornerRoundedArc(bottom: Float, right: Float): RectF = mRoundedCornerArc.apply {
-        set(right - mCornerRadius * 2, bottom - mCornerRadius * 2, right, bottom)
-    }
+    private fun getBottomRightCornerRoundedArc(bottom: Float, right: Float): RectF =
+        mRoundedCornerArc.apply {
+            set(right - mCornerRadius * 2, bottom - mCornerRadius * 2, right, bottom)
+        }
 
     private fun setShadowBlurRadius(elevation: Float) {
         val maxElevation = 24f.px.toFloat()

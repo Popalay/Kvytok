@@ -14,7 +14,6 @@ import android.os.Bundle
 import android.os.ParcelFileDescriptor
 import android.os.Parcelable
 import android.preference.PreferenceManager
-import android.util.Log
 import android.view.View
 import android.widget.ProgressBar
 import android.widget.Toast
@@ -97,16 +96,11 @@ class MainActivity : AppCompatActivity() {
     private fun processFile(filePath: String) {
         if (filePath.isBlank()) return
         val file = File(filePath)
-        Log.d("onNext", "start")
         disposable = file.pdfFileToBitmaps()
-            .doOnSuccess { Log.d("onNext", "pdfFileToBitmaps") }
             .flattenAsObservable { it }
             .map { it.removeTransparentBackground() }
-            .doOnNext { Log.d("onNext", "getQRCodeDetails start") }
             .flatMapSingle { getQRCodeDetails(it) }
-            .doOnNext { Log.d("onNext", "getQRCodeDetails") }
             .toSortedList(compareBy({ it.trainNumber }, { it.carNumber }, { it.seatNumber }))
-            .doOnSuccess { Log.d("onNext", "toList") }
             .subscribeOn(Schedulers.io())
             .flatMap { saveLastFile(file.absolutePath).toSingleDefault(it) }
             .observeOn(AndroidSchedulers.mainThread())

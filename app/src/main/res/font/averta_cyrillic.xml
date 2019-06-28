@@ -11,9 +11,9 @@
     <font
         app:font="@font/averta_cyrillic_bold"
         app:fontStyle="normal"
-        app:fontWeight="600" />
+        app:fontWeight="700" />
     <font
         app:font="@font/averta_cyrillic_black"
         app:fontStyle="normal"
-        app:fontWeight="700" />
+        app:fontWeight="900" />
 </font-family>
