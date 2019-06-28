@@ -91,7 +91,7 @@ class MainActivity : AppCompatActivity() {
         permissions: Array<String>, grantResults: IntArray
     ) {
         if (requestCode == REQUEST_CODE_READ_FILE) {
-            if ((grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
+            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 openFileChooser()
             }
         }
@@ -102,14 +102,17 @@ class MainActivity : AppCompatActivity() {
         val file = File(filePath)
         disposable = file.pdfFileToBitmaps()
             .flattenAsObservable { it }
-            .take(4)
             .map { it.removeTransparentBackground() }
             .flatMapSingle { getQRCodeDetails(it) }
             .toSortedList(compareBy({ it.trainNumber }, { it.carNumber }, { it.seatNumber }))
             .subscribeOn(Schedulers.io())
             .flatMap { saveLastFile(file.absolutePath).toSingleDefault(it) }
             .observeOn(AndroidSchedulers.mainThread())
-            .doOnSubscribe { progressBar.visibility = View.VISIBLE }
+            .doOnSubscribe {
+                progressBar.visibility = View.VISIBLE
+                layoutChips.removeAllViews()
+                ticketAdapter.submitList(emptyList())
+            }
             .subscribe(
                 { tickets ->
                     progressBar.visibility = View.GONE
@@ -140,12 +143,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun Bitmap.removeTransparentBackground(): Bitmap {
-        val converted = Bitmap.createBitmap(
-            width,
-            height,
-            Bitmap.Config.ARGB_8888
-        )
-
+        val converted = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
         Canvas(converted).apply {
             drawColor(Color.WHITE)
             drawBitmap(this@removeTransparentBackground, 0F, 0F, null)
