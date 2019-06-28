@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="ticket.train">Поезд</string>
+    <string name="ticket.car">Вагон</string>
+    <string name="ticket.passenger">Пассажир</string>
+    <string name="ticket.departure">Отпраление</string>
+    <string name="ticket.arrival">Прибытие</string>
+    <string name="ticlet.number">Номер билета</string>
+    <string name="ticket.seat">Место</string>
+</resources>
